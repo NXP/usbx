@@ -26,7 +26,7 @@
 /*  COMPONENT DEFINITION                                   RELEASE        */ 
 /*                                                                        */ 
 /*    ux_hcd_ohci.h                                       PORTABLE C      */ 
-/*                                                           6.1.8        */
+/*                                                           6.1.9.1      */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    Chaoqiong Xiao, Microsoft Corporation                               */
@@ -50,6 +50,9 @@
 /*                                            added extern "C" keyword    */
 /*                                            for compatibility with C++, */
 /*                                            resulting in version 6.1.8  */
+/*  12-09-2021     Xiuwen Cai               Modified comment(s),          */
+/*                                            fixed HcPeriodicStart value,*/
+/*                                            resulting in version 6.1.9.1*/
 /*                                                                        */
 /**************************************************************************/
 
@@ -188,6 +191,7 @@ extern   "C" {
 
 #define OHCI_HC_FM_INTERVAL_CLEAR                           0x8000ffffu
 #define OHCI_HC_FM_INTERVAL_SET                             0x27780000u
+#define OHCI_HC_FM_INTERVAL_FI_MASK                         0x00003fffu
 
 
 /* Define OHCI static definition.  */
@@ -204,7 +208,6 @@ extern   "C" {
 
 #define UX_OHCI_COMMAND_STATUS_RESET                        0
 #define UX_OHCI_INIT_RESET_DELAY                            10
-#define UX_OHCI_HC_PERIODIC_START_DEFAULT                   0x00003e67u
 
 /* Define OHCI completion code errors.  */
 

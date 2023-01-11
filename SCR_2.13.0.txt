@@ -1,0 +1,16 @@
+NXP Software Content Register
+
+--------------------------------------------
+
+Package:                   USBX
+Version:                   2.13.0
+Outgoing License:          ﻿LA_OPT_NXP_Software_License v35 May 2022 - Additional Distribution License granted - Section 2.3 applies
+License File:              LA_OPT_NXP_Software_License.txt
+Package Category:          BSP
+Type of content:           Sources
+Description and comments:  Azure RTOS USBX
+Release Location:          github.com/NXP/usbx
+Origin:                    NXP (proprietary)
+                           MICROSOFT (proprietary) - https://github.com/azure-rtos/usbx
+
+--------------------------------------------

@@ -15,7 +15,7 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3516 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
@@ -26,7 +26,7 @@
 #define UX_SOURCE_CODE
 
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
+#include "ux_hcd_ip3516.h"
 #include "ux_host_stack.h"
 
 
@@ -34,7 +34,7 @@
 /*                                                                        */ 
 /*  FUNCTION                                               RELEASE        */ 
 /*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/*    _ux_hcd_ip3516_register_write                       PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -42,12 +42,12 @@
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
+/*     This function writes a register to the IP3516 space.               */
 /*                                                                        */ 
 /*  INPUT                                                                 */ 
 /*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
+/*    hcd_ip3516                            Pointer to IP3516 controller  */ 
+/*    ip3516_register                       IP3516 register to write      */
 /*    value                                 Value to write                */ 
 /*                                                                        */ 
 /*  OUTPUT                                                                */ 
@@ -60,23 +60,20 @@
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    IP3516 Controller Driver                                            */
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+VOID  _ux_hcd_ip3516_register_write(UX_HCD_IP3516 *hcd_ip3516, ULONG ip3516_register, ULONG value)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+    /* Write to the specified IP3516 register.  */    
+    *(volatile ULONG *)(hcd_ip3516 -> ux_hcd_ip3516_base + ip3516_register) =  value;
 
     /* Return to caller.  */
     return;

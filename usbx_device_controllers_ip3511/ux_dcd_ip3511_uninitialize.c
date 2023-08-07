@@ -15,70 +15,94 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3511 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
 
+#define UX_SOURCE_CODE
+#define UX_DCD_IP3511_SOURCE_CODE
+
 
 /* Include necessary system files.  */
 
-#define UX_SOURCE_CODE
-
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
-#include "ux_host_stack.h"
+#include "ux_dcd_ip3511.h"
+#include "ux_device_stack.h"
 
 
-/**************************************************************************/ 
-/*                                                                        */ 
-/*  FUNCTION                                               RELEASE        */ 
-/*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/**************************************************************************/
+/*                                                                        */
+/*  FUNCTION                                               RELEASE        */
+/*                                                                        */
+/*    _ux_dcd_ip3511_uninitialize                         PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    Chaoqiong Xiao, Microsoft Corporation                               */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
-/*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
-/*                                                                        */ 
-/*  INPUT                                                                 */ 
-/*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
-/*    value                                 Value to write                */ 
-/*                                                                        */ 
-/*  OUTPUT                                                                */ 
-/*                                                                        */ 
-/*    None                                                                */ 
-/*                                                                        */ 
+/*                                                                        */
+/*    This function uninitializes the IP3511 USB device controller        */
+/*                                                                        */
+/*  INPUT                                                                 */
+/*                                                                        */
+/*    controller_id                         Controller ID                 */
+/*    handle_ptr                            Pointer to driver handle      */
+/*                                                                        */
+/*  OUTPUT                                                                */
+/*                                                                        */
+/*    Completion Status                                                   */ 
+/*                                                                        */
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
-/*    None                                                                */ 
+/*    USB_DeviceStop                        Disable device                */
+/*    USB_DeviceDeinit                      Uninitialize device           */
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    USBX Device Stack                                                   */ 
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+UINT  _ux_dcd_ip3511_uninitialize(ULONG controller_id, VOID** handle_ptr)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+UX_SLAVE_DCD            *dcd;
+UX_DCD_IP3511            *dcd_ip3511;
 
-    /* Return to caller.  */
-    return;
+
+    UX_PARAMETER_NOT_USED(controller_id);
+
+    /* Get the pointer to the DCD.  */
+    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+
+    /* Set the state of the controller to HALTED now.  */
+    dcd -> ux_slave_dcd_status =  UX_DCD_STATUS_HALTED;
+
+    /* Get controller driver.  */
+    dcd_ip3511 = (UX_DCD_IP3511 *)dcd -> ux_slave_dcd_controller_hardware;
+
+    /* Check parameter.  */
+    if (dcd_ip3511 -> handle == *handle_ptr)
+    {
+
+        /* Stop the device.  */
+        USB_DeviceStop(dcd_ip3511 -> handle);
+
+        /* Uninitialize the device.  */
+        USB_DeviceDeinit(dcd_ip3511 -> handle);
+
+        _ux_utility_memory_free(dcd_ip3511);
+        dcd -> ux_slave_dcd_controller_hardware = UX_NULL;
+        return(UX_SUCCESS);
+    }
+
+    /* Parameter not correct.  */
+    return(UX_ERROR);
 }
-

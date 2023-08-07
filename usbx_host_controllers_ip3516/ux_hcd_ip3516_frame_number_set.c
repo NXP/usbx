@@ -15,7 +15,7 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3516 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
@@ -26,7 +26,7 @@
 #define UX_SOURCE_CODE
 
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
+#include "ux_hcd_ip3516.h"
 #include "ux_host_stack.h"
 
 
@@ -34,7 +34,7 @@
 /*                                                                        */ 
 /*  FUNCTION                                               RELEASE        */ 
 /*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/*    _ux_hcd_ip3516_frame_number_set                     PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -42,13 +42,13 @@
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
+/*    This function will set the current frame number to the one          */ 
+/*    specified. This function is mostly used for isochronous purposes.   */ 
 /*                                                                        */ 
 /*  INPUT                                                                 */ 
 /*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
-/*    value                                 Value to write                */ 
+/*    hcd_ip3516                            Pointer to IP3516 controller  */ 
+/*    frame_number                          Frame number                  */ 
 /*                                                                        */ 
 /*  OUTPUT                                                                */ 
 /*                                                                        */ 
@@ -56,28 +56,39 @@
 /*                                                                        */ 
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
-/*    None                                                                */ 
+/*    _ux_hcd_ip3516_register_read          Read IP3516 register          */ 
+/*    _ux_hcd_ip3516_register_write         Write IP3516 register         */ 
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    IP3516 Controller Driver                                            */
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+VOID  _ux_hcd_ip3516_frame_number_set(UX_HCD_IP3516 *hcd_ip3516, ULONG frame_number)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+ULONG       ip3516_register;
 
+
+    /* It is illegal in IP3516 to set the frame number while the controller is 
+       running.  */
+    ip3516_register =  _ux_hcd_ip3516_register_read(hcd_ip3516, IP3516_HCOR_USB_COMMAND);
+    if (ip3516_register & IP3516_HC_IO_RS)
+        return;
+               
+    /* The register is based on micro frames, so we need to multiply the
+       value by 8 to get to the millisecond frame number.  */     
+    ip3516_register =  frame_number << 3;
+
+    /* Write the frame number, by default the micro frame will be set to 0.  */
+    _ux_hcd_ip3516_register_write(hcd_ip3516, IP3516_HCOR_FRAME_INDEX, ip3516_register);
+    
     /* Return to caller.  */
     return;
 }

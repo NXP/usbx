@@ -15,70 +15,84 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3511 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
 
+#define UX_SOURCE_CODE
+#define UX_DCD_IP3511_SOURCE_CODE
+
 
 /* Include necessary system files.  */
 
-#define UX_SOURCE_CODE
-
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
-#include "ux_host_stack.h"
+#include "ux_dcd_ip3511.h"
+#include "ux_device_stack.h"
 
 
-/**************************************************************************/ 
-/*                                                                        */ 
-/*  FUNCTION                                               RELEASE        */ 
-/*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/**************************************************************************/
+/*                                                                        */
+/*  FUNCTION                                               RELEASE        */
+/*                                                                        */
+/*    _ux_dcd_ip3511_endpoint_stall                       PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    Chaoqiong Xiao, Microsoft Corporation                               */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
-/*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
-/*                                                                        */ 
-/*  INPUT                                                                 */ 
-/*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
-/*    value                                 Value to write                */ 
-/*                                                                        */ 
-/*  OUTPUT                                                                */ 
-/*                                                                        */ 
-/*    None                                                                */ 
-/*                                                                        */ 
+/*                                                                        */
+/*    This function will stall a physical endpoint.                       */
+/*                                                                        */
+/*  INPUT                                                                 */
+/*                                                                        */
+/*    dcd_ip3511                            Pointer to device controller  */
+/*    endpoint                              Pointer to endpoint container */
+/*                                                                        */
+/*  OUTPUT                                                                */
+/*                                                                        */
+/*    Completion Status                                                   */ 
+/*                                                                        */
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
-/*    None                                                                */ 
+/*    USB_DeviceStallEndpoint               Set STALL condition           */
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    IP3511 Controller Driver                                            */
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+UINT  _ux_dcd_ip3511_endpoint_stall(UX_DCD_IP3511 *dcd_ip3511, UX_SLAVE_ENDPOINT *endpoint)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+UX_DCD_IP3511_ED     *ed;
 
-    /* Return to caller.  */
-    return;
+
+    /* Get the physical endpoint address in the endpoint container.  */
+    ed =  (UX_DCD_IP3511_ED *) endpoint -> ux_slave_endpoint_ed;
+
+    /* Set the endpoint to stall.  */
+    ed -> ux_dcd_ip3511_ed_status |=  UX_DCD_IP3511_ED_STATUS_STALLED;
+
+    /* Stall the endpoint.  */
+    USB_DeviceStallEndpoint(dcd_ip3511 -> handle, endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress);
+
+    /* Check if it is the Control endpoint.  */
+    if(endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress == 0)
+    {
+
+        /* Stall both direction of the Control endpoint.  */
+        USB_DeviceStallEndpoint(dcd_ip3511 -> handle, 0x80);
+    }
+
+    /* This function never fails.  */
+    return(UX_SUCCESS);
 }
 

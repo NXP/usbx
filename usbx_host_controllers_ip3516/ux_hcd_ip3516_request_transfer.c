@@ -15,7 +15,7 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3516 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
@@ -26,7 +26,7 @@
 #define UX_SOURCE_CODE
 
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
+#include "ux_hcd_ip3516.h"
 #include "ux_host_stack.h"
 
 
@@ -34,7 +34,7 @@
 /*                                                                        */ 
 /*  FUNCTION                                               RELEASE        */ 
 /*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/*    _ux_hcd_ip3516_request_transfer                     PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -42,43 +42,86 @@
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
+/*     This function is the handler for all the transactions on the USB.  */
+/*     The transfer request passed as parameter contains the endpoint and */ 
+/*     the device descriptors in addition to the type of transaction de   */ 
+/*     be executed.                                                       */ 
+/*                                                                        */
+/*     This function routes the transfer_request to according to the type */ 
+/*     of transfer to be executed.                                        */ 
 /*                                                                        */ 
 /*  INPUT                                                                 */ 
 /*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
-/*    value                                 Value to write                */ 
+/*    hcd_ip3516                            Pointer to IP3516 controller  */ 
+/*    transfer_request                      Pointer to transfer request   */ 
 /*                                                                        */ 
 /*  OUTPUT                                                                */ 
 /*                                                                        */ 
-/*    None                                                                */ 
+/*    Completion Status                                                   */ 
 /*                                                                        */ 
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
-/*    None                                                                */ 
+/*    _ux_hcd_ip3516_request_control_transfer   Start control transfer    */
+/*    _ux_hcd_ip3516_request_bulk_transfer      Start bulk transfer       */
+/*    _ux_hcd_ip3516_request_interrupt_transfer Start interrupt transfer  */
+/*    _ux_hcd_ip3516_request_isochronous_transfer                         */
+/*                                              Start iso transfer        */
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    IP3516 Controller Driver                                            */
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+UINT  _ux_hcd_ip3516_request_transfer(UX_HCD_IP3516 *hcd_ip3516, UX_TRANSFER *transfer_request)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+UX_ENDPOINT     *endpoint;
+UINT            status;
+    
 
-    /* Return to caller.  */
-    return;
+    /* Get the pointer to the Endpoint.  */
+    endpoint =  (UX_ENDPOINT *) transfer_request -> ux_transfer_request_endpoint;
+
+    /* We reset the actual length field of the transfer request as a safety measure.  */
+    transfer_request -> ux_transfer_request_actual_length =  0;
+    
+    /* Isolate the endpoint type and route the transfer request.  */
+    switch ((endpoint -> ux_endpoint_descriptor.bmAttributes) & UX_MASK_ENDPOINT_TYPE)
+    {
+
+    case UX_CONTROL_ENDPOINT:
+    
+        status =  _ux_hcd_ip3516_request_control_transfer(hcd_ip3516, transfer_request);
+        break;
+
+
+    case UX_BULK_ENDPOINT:
+
+        status =  _ux_hcd_ip3516_request_bulk_transfer(hcd_ip3516, transfer_request);
+        break;
+
+
+    case UX_INTERRUPT_ENDPOINT:
+
+        status =  _ux_hcd_ip3516_request_interrupt_transfer(hcd_ip3516, transfer_request);
+        break;
+
+
+    case UX_ISOCHRONOUS_ENDPOINT:
+
+        status =  _ux_hcd_ip3516_request_isochronous_transfer(hcd_ip3516, transfer_request);
+        break;
+
+    }
+
+    /* Note that it is physically impossible to have a wrong endpoint type here
+       so no error checking.  */
+    return(status);         
 }
 

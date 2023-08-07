@@ -15,70 +15,77 @@
 /**                                                                       */ 
 /** USBX Component                                                        */ 
 /**                                                                       */
-/**   EHCI Controller Driver                                              */
+/**   IP3511 Controller Driver                                            */
 /**                                                                       */
 /**************************************************************************/
 /**************************************************************************/
 
+#define UX_SOURCE_CODE
+#define UX_DCD_IP3511_SOURCE_CODE
+
 
 /* Include necessary system files.  */
 
-#define UX_SOURCE_CODE
-
 #include "ux_api.h"
-#include "ux_hcd_ehci.h"
-#include "ux_host_stack.h"
+#include "ux_dcd_ip3511.h"
+#include "ux_device_stack.h"
 
 
-/**************************************************************************/ 
-/*                                                                        */ 
-/*  FUNCTION                                               RELEASE        */ 
-/*                                                                        */ 
-/*    _ux_hcd_ehci_register_write                         PORTABLE C      */ 
+/**************************************************************************/
+/*                                                                        */
+/*  FUNCTION                                               RELEASE        */
+/*                                                                        */
+/*    _ux_dcd_ip3511_endpoint_status                      PORTABLE C      */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    Chaoqiong Xiao, Microsoft Corporation                               */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
-/*                                                                        */ 
-/*     This function writes a register to the EHCI space.                 */ 
-/*                                                                        */ 
-/*  INPUT                                                                 */ 
-/*                                                                        */ 
-/*    hcd_ehci                              Pointer to EHCI controller    */ 
-/*    ehci_register                         EHCI register to write        */ 
-/*    value                                 Value to write                */ 
-/*                                                                        */ 
-/*  OUTPUT                                                                */ 
-/*                                                                        */ 
-/*    None                                                                */ 
-/*                                                                        */ 
+/*                                                                        */
+/*    This function will retrieve the status of the endpoint.             */
+/*                                                                        */
+/*  INPUT                                                                 */
+/*                                                                        */
+/*    dcd_ip3511                            Pointer to device controller  */
+/*    endpoint_index                        Endpoint index                */
+/*                                                                        */
+/*  OUTPUT                                                                */
+/*                                                                        */
+/*    Completion Status                                                   */ 
+/*                                                                        */
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
 /*    None                                                                */ 
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 
-/*    EHCI Controller Driver                                              */
+/*    IP3511 Controller Driver                                            */
 /*                                                                        */ 
 /*  RELEASE HISTORY                                                       */ 
 /*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */ 
 /*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
+/*  xx-xx-xxxx     Chaoqiong Xiao           Initial Version 6.1           */
 /*                                                                        */
 /**************************************************************************/
-VOID  _ux_hcd_ehci_register_write(UX_HCD_EHCI *hcd_ehci, ULONG ehci_register, ULONG value)
+UINT  _ux_dcd_ip3511_endpoint_status(UX_DCD_IP3511 *dcd_ip3511, ULONG endpoint_index)
 {
-    volatile ULONG *reg_ptr = (volatile ULONG *)(hcd_ehci -> ux_hcd_ehci_base + ehci_register);
 
-    /* Write to the specified EHCI register.  */
-    *reg_ptr = value;
+UX_DCD_IP3511_ED      *ed;
 
-    /* Return to caller.  */
-    return;
+
+    /* Fetch the address of the physical endpoint.  */
+    ed =  &dcd_ip3511 -> ux_dcd_ip3511_ed[endpoint_index];
+
+    /* Check the endpoint status, if it is free, we have a illegal endpoint.  */
+    if ((ed -> ux_dcd_ip3511_ed_status & UX_DCD_IP3511_ED_STATUS_USED) == 0)
+        return(UX_ERROR);
+
+    /* Check if the endpoint is stalled.  */
+    if ((ed -> ux_dcd_ip3511_ed_status & UX_DCD_IP3511_ED_STATUS_STALLED) == 0)
+        return(UX_FALSE);
+    else
+        return(UX_TRUE);
 }
 
